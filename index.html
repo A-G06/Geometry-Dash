@@ -1,0 +1,1992 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>Geometry Dash Retro - Split-Screen 2-Player Racing</title>
+    <meta
+      name="description"
+      content="Split-screen 2-player arcade platformer on pure black AMOLED canvas with Cube to Mini-Rocket morphing, Dash Shop economy, and YouTube retro soundtrack."
+    />
+    <meta property="og:title" content="Geometry Dash Retro - Split-Screen 2-Player Racing" />
+    <meta
+      property="og:description"
+      content="Split-screen 2-player arcade platformer on pure black AMOLED canvas with Cube to Mini-Rocket morphing, Dash Shop economy, and YouTube retro soundtrack."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <style>
+      /* --- AMOLED PURE BLACK STYLING & TOUCH ISOLATION --- */
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      /* Harlow Solid Italic typography definition with graceful cursive fallbacks */
+      @font-face {
+        font-family: "Harlow Solid Italic";
+        src: local("Harlow Solid Italic"), local("Harlow Solid"), local("Brush Script MT");
+      }
+
+      .harlow-font {
+        font-family: "Harlow Solid Italic", "Brush Script MT", "Dancing Script", cursive, serif;
+        font-style: italic;
+        text-shadow: 0 0 14px rgba(0, 240, 255, 0.6), 0 0 28px rgba(255, 0, 127, 0.4);
+      }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #000000;
+        color: #ffffff;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, monospace;
+        touch-action: none;
+      }
+
+      #game-container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        background: #000000;
+        overflow: hidden;
+        touch-action: none;
+      }
+
+      canvas#gameCanvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: #000000;
+        touch-action: none;
+      }
+
+      /* --- HORIZONTAL SPLIT DIVIDER --- */
+      .split-divider-line {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        transform: translateY(-50%);
+        background: linear-gradient(90deg, #00f0ff 0%, #ffffff 50%, #ff007f 100%);
+        box-shadow: 0 0 16px rgba(0, 240, 255, 0.8), 0 0 16px rgba(255, 0, 127, 0.8);
+        pointer-events: none;
+        z-index: 15;
+      }
+
+      .split-divider-pill {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #000000;
+        border: 1px solid rgba(255, 255, 0, 0.5);
+        border-radius: 999px;
+        padding: 3px 12px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        color: #ffff00;
+        text-shadow: 0 0 8px rgba(255, 255, 0, 0.6);
+        pointer-events: auto;
+        cursor: pointer;
+        z-index: 16;
+        transition: transform 0.15s, border-color 0.15s;
+      }
+
+      .split-divider-pill:hover {
+        transform: translate(-50%, -50%) scale(1.06);
+        border-color: #ffff00;
+        box-shadow: 0 0 12px rgba(255, 255, 0, 0.5);
+      }
+
+      /* --- MULTI-DEVICE RESPONSIVE TOUCH ZONES --- */
+      .touch-zone-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        pointer-events: auto;
+        z-index: 10;
+        touch-action: none;
+      }
+
+      .touch-zone {
+        flex: 1;
+        height: 100%;
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding-bottom: 20px;
+        transition: background-color 0.12s ease;
+        touch-action: none;
+      }
+
+      .touch-zone-p1 {
+        border-right: 1px dashed rgba(0, 240, 255, 0.12);
+      }
+
+      .touch-zone-p2 {
+        border-left: 1px dashed rgba(255, 0, 127, 0.12);
+      }
+
+      .touch-zone.active-p1 {
+        background: radial-gradient(circle at 25% 65%, rgba(0, 240, 255, 0.1) 0%, transparent 65%);
+      }
+
+      .touch-zone.active-p2 {
+        background: radial-gradient(circle at 75% 65%, rgba(255, 0, 127, 0.1) 0%, transparent 65%);
+      }
+
+      .touch-label {
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 5px 12px;
+        border-radius: 999px;
+        backdrop-filter: blur(6px);
+        opacity: 0.55;
+        transition: opacity 0.15s, transform 0.1s;
+        pointer-events: none;
+      }
+
+      .touch-zone-p1 .touch-label {
+        color: #00f0ff;
+        border: 1px solid rgba(0, 240, 255, 0.35);
+        background: rgba(0, 240, 255, 0.06);
+      }
+
+      .touch-zone-p2 .touch-label {
+        color: #ff007f;
+        border: 1px solid rgba(255, 0, 127, 0.35);
+        background: rgba(255, 0, 127, 0.06);
+      }
+
+      .touch-zone.active-p1 .touch-label,
+      .touch-zone.active-p2 .touch-label {
+        opacity: 0.95;
+        transform: scale(1.05);
+      }
+
+      /* --- SPLIT HUD HEADERS --- */
+      .hud-bar {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 18px;
+        pointer-events: none;
+        z-index: 20;
+      }
+
+      .hud-bar-top {
+        top: 0;
+      }
+
+      .hud-bar-bottom {
+        bottom: 0;
+      }
+
+      .player-hud-pill {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(10, 10, 14, 0.85);
+        border-radius: 8px;
+        padding: 6px 12px;
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        pointer-events: auto;
+      }
+
+      .hud-p1 {
+        border-left: 3px solid #00f0ff;
+        box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+      }
+
+      .hud-p2 {
+        border-left: 3px solid #ff007f;
+        box-shadow: 0 0 12px rgba(255, 0, 127, 0.2);
+      }
+
+      .hud-badge {
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+
+      .badge-p1 { background: #00f0ff; color: #000; }
+      .badge-p2 { background: #ff007f; color: #fff; }
+
+      .hud-dist-val {
+        font-size: 16px;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .hud-mode-tag {
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        padding: 2px 6px;
+        border-radius: 3px;
+        text-transform: uppercase;
+      }
+
+      .mode-cube {
+        background: rgba(0, 240, 255, 0.15);
+        color: #00f0ff;
+        border: 1px solid rgba(0, 240, 255, 0.4);
+      }
+
+      .mode-rocket {
+        background: rgba(255, 170, 0, 0.2);
+        color: #ffaa00;
+        border: 1px solid rgba(255, 170, 0, 0.5);
+      }
+
+      .hud-currency-tag {
+        font-size: 11px;
+        font-weight: 800;
+        color: #38bdf8;
+        background: rgba(56, 189, 248, 0.1);
+        padding: 3px 8px;
+        border-radius: 4px;
+        border: 1px solid rgba(56, 189, 248, 0.25);
+      }
+
+      .hud-mega-badge {
+        font-size: 10px;
+        font-weight: 900;
+        background: linear-gradient(135deg, #f59e0b, #ef4444);
+        color: #fff;
+        padding: 3px 7px;
+        border-radius: 4px;
+        box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+        display: none;
+      }
+
+      /* Global Header Controls (YouTube Music & Shop) */
+      .hud-controls-right {
+        position: absolute;
+        top: 10px;
+        right: 18px;
+        display: flex;
+        gap: 8px;
+        pointer-events: auto;
+        z-index: 25;
+      }
+
+      .retro-btn-small {
+        background: rgba(14, 14, 20, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 6px 12px;
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        backdrop-filter: blur(6px);
+        transition: all 0.15s ease;
+      }
+
+      .retro-btn-small:hover {
+        background: rgba(28, 28, 38, 0.95);
+        border-color: rgba(255, 255, 255, 0.35);
+      }
+
+      /* --- FLOATING MENU CARDS (HARLOW SOLID ITALIC) --- */
+      .overlay-screen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.88);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 16px;
+        z-index: 50;
+        backdrop-filter: blur(10px);
+        transition: opacity 0.25s ease;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .floating-card {
+        max-width: 660px;
+        width: 100%;
+        background: #040407;
+        border: 2px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        padding: 28px 24px;
+        box-shadow: 0 0 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(0, 240, 255, 0.1), 0 0 35px rgba(255, 0, 127, 0.1);
+        text-align: center;
+      }
+
+      .card-title {
+        font-size: clamp(34px, 7vw, 54px);
+        line-height: 1.1;
+        margin-bottom: 6px;
+        background: linear-gradient(90deg, #00f0ff 0%, #ffffff 50%, #ff007f 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .card-subtitle {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 2px;
+        color: #8899aa;
+        text-transform: uppercase;
+        margin-bottom: 18px;
+      }
+
+      .soundtrack-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #ffff44;
+        background: rgba(255, 255, 68, 0.08);
+        border: 1px solid rgba(255, 255, 68, 0.25);
+        padding: 4px 12px;
+        border-radius: 999px;
+        margin-bottom: 20px;
+      }
+
+      .controls-split-view {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 22px;
+        text-align: left;
+      }
+
+      @media (max-width: 580px) {
+        .controls-split-view {
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+        .floating-card {
+          padding: 20px 16px;
+        }
+      }
+
+      .player-config-box {
+        background: rgba(12, 12, 18, 0.9);
+        border-radius: 12px;
+        padding: 14px;
+      }
+
+      .config-p1 {
+        border-left: 3px solid #00f0ff;
+        border-top: 1px solid rgba(0, 240, 255, 0.2);
+      }
+
+      .config-p2 {
+        border-left: 3px solid #ff007f;
+        border-top: 1px solid rgba(255, 0, 127, 0.2);
+      }
+
+      .config-header {
+        font-size: 13px;
+        font-weight: 900;
+        margin-bottom: 6px;
+      }
+
+      .config-text {
+        font-size: 12px;
+        color: #aaaacc;
+        line-height: 1.45;
+      }
+
+      .key-capsule {
+        display: inline-block;
+        padding: 2px 6px;
+        background: #1c1c28;
+        border: 1px solid #38384e;
+        border-radius: 4px;
+        color: #fff;
+        font-weight: 800;
+        font-size: 10px;
+      }
+
+      .btn-primary-action {
+        background: linear-gradient(135deg, #00f0ff 0%, #ff007f 100%);
+        color: #ffffff;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border: none;
+        border-radius: 12px;
+        padding: 15px 36px;
+        cursor: pointer;
+        box-shadow: 0 0 25px rgba(0, 240, 255, 0.4), 0 0 25px rgba(255, 0, 127, 0.4);
+        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
+      .btn-primary-action:hover {
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 0 35px rgba(0, 240, 255, 0.6), 0 0 35px rgba(255, 0, 127, 0.6);
+      }
+
+      .btn-secondary-action {
+        background: rgba(255, 255, 255, 0.08);
+        border: 2px solid rgba(255, 255, 255, 0.25);
+        color: #ffffff;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border-radius: 12px;
+        padding: 15px 36px;
+        cursor: pointer;
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
+      .btn-secondary-action:hover {
+        background: rgba(255, 255, 255, 0.18);
+        border-color: #00f0ff;
+        color: #00f0ff;
+        box-shadow: 0 0 25px rgba(0, 240, 255, 0.4);
+        transform: translateY(-2px) scale(1.03);
+      }
+
+      .btn-secondary-action:active {
+        transform: translateY(1px) scale(0.99);
+      }
+
+      /* --- IN-GAME DASH SHOP OVERLAY CARD --- */
+      .shop-item-row {
+        background: rgba(16, 16, 24, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        padding: 16px;
+        margin: 16px 0 20px;
+        text-align: left;
+      }
+
+      .shop-item-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+
+      .shop-item-title {
+        font-size: 22px;
+        color: #f59e0b;
+      }
+
+      .shop-item-price {
+        font-size: 12px;
+        font-weight: 900;
+        color: #ffff00;
+        background: rgba(255, 255, 0, 0.12);
+        border: 1px solid rgba(255, 255, 0, 0.35);
+        padding: 3px 8px;
+        border-radius: 4px;
+      }
+
+      .shop-actions-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .btn-shop-buy {
+        flex: 1;
+        padding: 10px;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.15s;
+        border: none;
+      }
+
+      .btn-buy-p1 {
+        background: rgba(0, 240, 255, 0.18);
+        border: 1px solid #00f0ff;
+        color: #00f0ff;
+      }
+
+      .btn-buy-p1:hover:not(:disabled) {
+        background: #00f0ff;
+        color: #000;
+      }
+
+      .btn-buy-p2 {
+        background: rgba(255, 0, 127, 0.18);
+        border: 1px solid #ff007f;
+        color: #ff007f;
+      }
+
+      .btn-buy-p2:hover:not(:disabled) {
+        background: #ff007f;
+        color: #fff;
+      }
+
+      .btn-shop-buy:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+
+      /* Game Over Specifics */
+      .winner-banner-headline {
+        font-size: clamp(32px, 7vw, 50px);
+        margin-bottom: 8px;
+      }
+
+      .winner-p1 { color: #00f0ff; text-shadow: 0 0 25px rgba(0, 240, 255, 0.7); }
+      .winner-p2 { color: #ff007f; text-shadow: 0 0 25px rgba(255, 0, 127, 0.7); }
+      .winner-tie { color: #d946ef; text-shadow: 0 0 25px rgba(217, 70, 239, 0.7); }
+
+      .winner-explainer {
+        font-size: 13px;
+        font-weight: 700;
+        color: #ffff00;
+        margin-bottom: 20px;
+      }
+
+      /* Hidden YouTube Player Container */
+      #yt-audio-container {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0.01;
+        pointer-events: none;
+        overflow: hidden;
+        left: -9999px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <!-- High-Performance AMOLED Vector Canvas -->
+      <canvas id="gameCanvas"></canvas>
+
+      <!-- Horizontal Center Split Divider Line & Quick Shop Badge -->
+      <div class="split-divider-line"></div>
+      <button class="split-divider-pill" id="btnDividerShop" title="Open Dash In-Game Shop">
+        🛒 DASH SHOP (15 DASHES = MEGA JUMP)
+      </button>
+
+      <!-- Multi-Device Touch Zones (Left Half = P1, Right Half = P2) -->
+      <div class="touch-zone-container" id="touchZones">
+        <div class="touch-zone touch-zone-p1" id="zoneP1">
+          <div class="touch-label">P1 JUMP / THRUST (LEFT HALF)</div>
+        </div>
+        <div class="touch-zone touch-zone-p2" id="zoneP2">
+          <div class="touch-label">P2 JUMP / THRUST (RIGHT HALF)</div>
+        </div>
+      </div>
+
+      <!-- Player 1 Split-Screen HUD (Top Half) -->
+      <div class="hud-bar hud-bar-top">
+        <div class="player-hud-pill hud-p1">
+          <span class="hud-badge badge-p1">P1</span>
+          <span class="hud-mode-tag mode-cube" id="hudP1Mode">CUBE</span>
+          <span class="hud-dist-val" style="color: #00f0ff;" id="hudP1Dist">0m</span>
+          <span class="hud-currency-tag" id="hudP1Dashes">DASHES: 0</span>
+          <span class="hud-mega-badge" id="hudP1MegaActive">⚡ MEGA JUMP READY</span>
+        </div>
+      </div>
+
+      <!-- Player 2 Split-Screen HUD (Bottom Half) -->
+      <div class="hud-bar hud-bar-bottom">
+        <div class="player-hud-pill hud-p2">
+          <span class="hud-badge badge-p2">P2</span>
+          <span class="hud-mode-tag mode-cube" id="hudP2Mode">CUBE</span>
+          <span class="hud-dist-val" style="color: #ff007f;" id="hudP2Dist">0m</span>
+          <span class="hud-currency-tag" id="hudP2Dashes">DASHES: 0</span>
+          <span class="hud-mega-badge" id="hudP2MegaActive">⚡ MEGA JUMP READY</span>
+        </div>
+      </div>
+
+      <!-- Global Header Controls (YouTube Music & Shop) -->
+      <div class="hud-controls-right">
+        <button class="retro-btn-small" id="btnToggleMusic" title="Toggle YouTube Stereo Madness Track">
+          🎵 MUSIC: PLAYING
+        </button>
+        <button class="retro-btn-small" id="btnOpenShop" title="Open Dash In-Game Shop">
+          🛒 SHOP
+        </button>
+      </div>
+
+      <!-- Hidden YouTube Music Player Iframe -->
+      <div id="yt-audio-container">
+        <iframe
+          id="ytPlayer"
+          width="100"
+          height="100"
+          src="https://www.youtube.com/embed/tof8_p0F3kg?enablejsapi=1&autoplay=1&loop=1&playlist=tof8_p0F3kg&controls=0&mute=0"
+          title="Stereo Madness YouTube Audio"
+          allow="autoplay"
+        ></iframe>
+      </div>
+
+      <!-- START MENU MODAL (HARLOW SOLID ITALIC) -->
+      <div class="overlay-screen" id="startScreen">
+        <div class="floating-card">
+          <h1 class="card-title harlow-font">Geometry Dash Retro</h1>
+          <p class="card-subtitle">Local 2-Player Split-Screen Arcade Racing • AMOLED Pure Black</p>
+          <div class="soundtrack-badge">
+            <span>🎶</span> Soundtrack: Stereo Madness by ForeverBound
+          </div>
+
+          <div class="controls-split-view">
+            <!-- P1 Config -->
+            <div class="player-config-box config-p1">
+              <h2 class="config-header" style="color: #00f0ff;">PLAYER 1 (TOP HALF)</h2>
+              <p class="config-text">
+                • <strong>Desktop:</strong> Press <span class="key-capsule">W</span> or <span class="key-capsule">A</span><br />
+                • <strong>Mobile:</strong> Tap/Hold <strong style="color: #00f0ff;">LEFT HALF</strong><br />
+                • <strong>World 1:</strong> Tap to jump over spikes.<br />
+                • <strong>World 2:</strong> Hold to thrust Rocket upward!
+              </p>
+            </div>
+
+            <!-- P2 Config -->
+            <div class="player-config-box config-p2">
+              <h2 class="config-header" style="color: #ff007f;">PLAYER 2 (BOTTOM HALF)</h2>
+              <p class="config-text">
+                • <strong>Desktop:</strong> Press <span class="key-capsule">↑ UP</span> or <span class="key-capsule">L</span><br />
+                • <strong>Mobile:</strong> Tap/Hold <strong style="color: #ff007f;">RIGHT HALF</strong><br />
+                • <strong>World 1:</strong> Tap to jump over spikes.<br />
+                • <strong>World 2:</strong> Hold to thrust Rocket upward!
+              </p>
+            </div>
+          </div>
+
+          <button class="btn-primary-action harlow-font" id="btnStartRace">
+            Launch Split-Screen Race
+          </button>
+        </div>
+      </div>
+
+      <!-- IN-GAME DASH SHOP OVERLAY MODAL -->
+      <div class="overlay-screen hidden" id="shopScreen">
+        <div class="floating-card" style="max-width: 580px;">
+          <h2 class="card-title harlow-font" style="font-size: 40px; color: #ffff00;">Dash In-Game Shop</h2>
+          <p class="card-subtitle">Trade cumulative physical jump/thrust Dashes for race-defining boosts!</p>
+
+          <div class="shop-item-row">
+            <div class="shop-item-top">
+              <span class="shop-item-title harlow-font">Mega Jump Surge</span>
+              <span class="shop-item-price">COST: 15 DASHES</span>
+            </div>
+            <p style="font-size: 12px; color: #ccc; line-height: 1.45;">
+              Immediately upon starting the race, launches your vector cube safely across a large forward pathing coordinate array, covering half the distance of the course safely without dying!
+            </p>
+            <div class="shop-actions-group">
+              <button class="btn-shop-buy btn-buy-p1" id="btnBuyP1">BUY P1 (0/15 Dashes)</button>
+              <button class="btn-shop-buy btn-buy-p2" id="btnBuyP2">BUY P2 (0/15 Dashes)</button>
+            </div>
+          </div>
+
+          <button class="retro-btn-small" style="margin: 0 auto; padding: 10px 24px;" id="btnCloseShop">
+            Close Shop
+          </button>
+        </div>
+      </div>
+
+      <!-- GAME OVER RESULT MODAL -->
+      <div class="overlay-screen hidden" id="gameOverScreen">
+        <div class="floating-card">
+          <h2 class="winner-banner-headline harlow-font" id="winnerHeadline">PLAYER 1 WINS!</h2>
+          <div class="winner-explainer" id="winnerReason">Reached the Finish Line first!</div>
+
+          <div class="controls-split-view" style="margin-bottom: 20px;">
+            <div class="player-config-box config-p1">
+              <h3 style="color: #00f0ff; font-size: 13px; margin-bottom: 6px;">PLAYER 1 STATS</h3>
+              <p style="font-size: 12px; color: #aaaacc; line-height: 1.6;">
+                Distance: <strong style="color: #fff;" id="statP1Dist">0 m</strong><br />
+                Dashes: <strong style="color: #fff;" id="statP1Dashes">0</strong><br />
+                Status: <strong style="color: #fff;" id="statP1Status">Finished</strong>
+              </p>
+            </div>
+
+            <div class="player-config-box config-p2">
+              <h3 style="color: #ff007f; font-size: 13px; margin-bottom: 6px;">PLAYER 2 STATS</h3>
+              <p style="font-size: 12px; color: #aaaacc; line-height: 1.6;">
+                Distance: <strong style="color: #fff;" id="statP2Dist">0 m</strong><br />
+                Dashes: <strong style="color: #fff;" id="statP2Dashes">0</strong><br />
+                Status: <strong style="color: #fff;" id="statP2Status">Crashed</strong>
+              </p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
+            <button class="btn-primary-action harlow-font" id="btnPlayAgain">
+              Play Again
+            </button>
+            <button class="btn-secondary-action harlow-font" id="btnMainMenu">
+              Main Menu
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ENGINE, PHYSICS, INPUTS & WEB AUDIO SCRIPT -->
+    <script>
+      (function () {
+        'use strict';
+
+        /* -----------------------------------------------------------
+           1. BACKUP WEB AUDIO API SYNTHESIZER & SFX ENGINE
+           Pure 8-bit electronic oscillators directly through sound card
+           ----------------------------------------------------------- */
+        class WebAudioSFXEngine {
+          constructor() {
+            this.ctx = null;
+            this.enabled = true;
+          }
+
+          init() {
+            if (!this.ctx) {
+              const AudioContext = window.AudioContext || window.webkitAudioContext;
+              if (AudioContext) {
+                this.ctx = new AudioContext();
+              }
+            }
+            if (this.ctx && this.ctx.state === 'suspended') {
+              this.ctx.resume();
+            }
+          }
+
+          playP1Jump() {
+            if (!this.enabled || !this.ctx) return;
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(320, now);
+            osc.frequency.exponentialRampToValueAtTime(760, now + 0.12);
+
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.12);
+          }
+
+          playP2Jump() {
+            if (!this.enabled || !this.ctx) return;
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(240, now);
+            osc.frequency.exponentialRampToValueAtTime(620, now + 0.13);
+
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.13);
+          }
+
+          playRocketHum(freq) {
+            if (!this.enabled || !this.ctx) return;
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq || 190, now);
+
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.05);
+          }
+
+          playExplosion() {
+            if (!this.enabled || !this.ctx) return;
+            const now = this.ctx.currentTime;
+
+            // Pitch dive
+            const osc = this.ctx.createOscillator();
+            const oGain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.exponentialRampToValueAtTime(28, now + 0.35);
+            oGain.gain.setValueAtTime(0.35, now);
+            oGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+            osc.connect(oGain);
+            oGain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.35);
+
+            // Filtered white noise burst
+            const bufSize = Math.floor(this.ctx.sampleRate * 0.28);
+            const buffer = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufSize; i++) {
+              data[i] = Math.random() * 2 - 1;
+            }
+
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(1400, now);
+            filter.frequency.exponentialRampToValueAtTime(100, now + 0.28);
+
+            const nGain = this.ctx.createGain();
+            nGain.gain.setValueAtTime(0.35, now);
+            nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+            noise.connect(filter);
+            filter.connect(nGain);
+            nGain.connect(this.ctx.destination);
+            noise.start(now);
+            noise.stop(now + 0.28);
+          }
+
+          playMegaJump() {
+            if (!this.enabled || !this.ctx) return;
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(140, now);
+            osc.frequency.exponentialRampToValueAtTime(1200, now + 0.4);
+
+            gain.gain.setValueAtTime(0.35, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.45);
+          }
+
+          playVictory() {
+            if (!this.enabled || !this.ctx) return;
+            const freqs = [261.63, 329.63, 392.00, 523.25, 659.25];
+            freqs.forEach((f, i) => {
+              const start = this.ctx.currentTime + i * 0.09;
+              const osc = this.ctx.createOscillator();
+              const gain = this.ctx.createGain();
+              osc.type = 'triangle';
+              osc.frequency.setValueAtTime(f, start);
+              gain.gain.setValueAtTime(0.18, start);
+              gain.gain.exponentialRampToValueAtTime(0.001, start + 0.22);
+              osc.connect(gain);
+              gain.connect(this.ctx.destination);
+              osc.start(start);
+              osc.stop(start + 0.22);
+            });
+          }
+        }
+
+        const sfx = new WebAudioSFXEngine();
+
+        /* -----------------------------------------------------------
+           2. YOUTUBE MUSIC FRAMEWORK (STEREO MADNESS)
+           ----------------------------------------------------------- */
+        let musicPlaying = true;
+        const ytPlayer = document.getElementById('ytPlayer');
+        const btnToggleMusic = document.getElementById('btnToggleMusic');
+
+        function playYouTubeAudio() {
+          if (!musicPlaying) return;
+          if (ytPlayer && ytPlayer.contentWindow) {
+            ytPlayer.contentWindow.postMessage(
+              JSON.stringify({
+                event: 'command',
+                func: 'playVideo',
+                args: []
+              }),
+              '*'
+            );
+          }
+        }
+
+        function restartYouTubeAudio() {
+          if (!musicPlaying) return;
+          if (ytPlayer && ytPlayer.contentWindow) {
+            ytPlayer.contentWindow.postMessage(
+              JSON.stringify({
+                event: 'command',
+                func: 'seekTo',
+                args: [0, true]
+              }),
+              '*'
+            );
+            ytPlayer.contentWindow.postMessage(
+              JSON.stringify({
+                event: 'command',
+                func: 'playVideo',
+                args: []
+              }),
+              '*'
+            );
+          }
+        }
+
+        function pauseYouTubeAudio() {
+          if (ytPlayer && ytPlayer.contentWindow) {
+            ytPlayer.contentWindow.postMessage(
+              JSON.stringify({
+                event: 'command',
+                func: 'pauseVideo',
+                args: []
+              }),
+              '*'
+            );
+          }
+        }
+
+        function toggleYouTubeMusic() {
+          musicPlaying = !musicPlaying;
+          if (musicPlaying) {
+            playYouTubeAudio();
+            btnToggleMusic.textContent = '🎵 MUSIC: PLAYING';
+          } else {
+            pauseYouTubeAudio();
+            btnToggleMusic.textContent = '🔇 MUSIC: PAUSED';
+          }
+        }
+
+        btnToggleMusic.addEventListener('click', toggleYouTubeMusic);
+
+        /* -----------------------------------------------------------
+           3. PERSISTENT DASH CURRENCY & GAME CONFIGURATION
+           ----------------------------------------------------------- */
+        // Load persistent Dashes from localStorage
+        let savedDashesP1 = 0;
+        let savedDashesP2 = 0;
+        try {
+          savedDashesP1 = parseInt(localStorage.getItem('gd_retro_dashes_p1') || '0', 10);
+          savedDashesP2 = parseInt(localStorage.getItem('gd_retro_dashes_p2') || '0', 10);
+        } catch (e) {
+          savedDashesP1 = 0;
+          savedDashesP2 = 0;
+        }
+
+        const STATES = {
+          MENU: 'MENU',
+          PLAYING: 'PLAYING',
+          GAMEOVER: 'GAMEOVER'
+        };
+
+        let gameState = STATES.MENU;
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let dpr = window.devicePixelRatio || 1;
+        let viewW = window.innerWidth;
+        let viewH = window.innerHeight;
+        let halfH = Math.floor(viewH / 2);
+
+        // Course milestones
+        const WORLD1_LENGTH = 2500; // Halfway checkpoint to World 2 (Mini Rocket)
+        const TOTAL_COURSE_LENGTH = 5200; // Finish Line
+
+        // Physics constants
+        const BASE_SPEED = 390; // px/sec horizontal speed
+        const CUBE_GRAVITY = 2100; // px/sec^2
+        const CUBE_JUMP_FORCE = -790; // upward impulse
+
+        // Mini Rocket Flight (Hold-to-fly)
+        const ROCKET_THRUST = -1600; // Upward acceleration when key/touch held
+        const ROCKET_GRAVITY = 1100; // Downward gravity decay
+        const ROCKET_MAX_VY = 600; // Velocity clamp
+
+        /* -----------------------------------------------------------
+           4. PLAYER MODEL (CUBE TO MINI-ROCKET MORPH)
+           ----------------------------------------------------------- */
+        class SplitScreenRunner {
+          constructor(id, color, name, initialDashes) {
+            this.id = id;
+            this.color = color;
+            this.name = name;
+
+            this.worldX = 0;
+            this.localY = 0;
+            this.vy = 0;
+            this.size = 36;
+            this.mode = 'CUBE'; // 'CUBE' or 'ROCKET'
+            this.isGrounded = false;
+            this.rotation = 0;
+            this.rocketAngle = 0;
+            this.alive = true;
+            this.finished = false;
+
+            this.inputHeld = false;
+            this.thrustTimer = 0;
+
+            // Dash Currency & Mega Jump
+            this.dashes = initialDashes || 0;
+            this.hasMegaJumpPurchased = false;
+            this.isMegaJumping = false;
+            this.megaJumpProgress = 0;
+            this.megaJumpStartX = 0;
+            this.megaJumpTargetX = 0;
+
+            this.trail = [];
+          }
+
+          reset() {
+            this.worldX = 100;
+            this.localY = halfH - 42 - this.size;
+            this.vy = 0;
+            this.mode = 'CUBE';
+            this.isGrounded = true;
+            this.rotation = 0;
+            this.rocketAngle = 0;
+            this.alive = true;
+            this.finished = false;
+            this.inputHeld = false;
+            this.thrustTimer = 0;
+
+            // Trigger Mega Jump surge if purchased before race start
+            if (this.hasMegaJumpPurchased) {
+              this.isMegaJumping = true;
+              this.hasMegaJumpPurchased = false;
+              this.megaJumpProgress = 0;
+              this.megaJumpStartX = 100;
+              // Covers half the course length safely
+              this.megaJumpTargetX = Math.floor(TOTAL_COURSE_LENGTH * 0.52);
+              sfx.playMegaJump();
+            } else {
+              this.isMegaJumping = false;
+            }
+
+            this.trail = [];
+          }
+
+          onInputDown() {
+            if (!this.alive || this.finished) return;
+            this.inputHeld = true;
+
+            // Increment persistent Dashes currency
+            this.dashes++;
+            savePersistentDashes();
+            updateDashesHUD();
+
+            if (this.mode === 'CUBE') {
+              if (this.isGrounded) {
+                this.vy = CUBE_JUMP_FORCE;
+                this.isGrounded = false;
+                if (this.id === 1) sfx.playP1Jump();
+                else sfx.playP2Jump();
+              }
+            } else {
+              sfx.playRocketHum(this.id === 1 ? 260 : 210);
+            }
+          }
+
+          onInputUp() {
+            this.inputHeld = false;
+          }
+
+          update(dt, ceilingY, floorY) {
+            if (!this.alive || this.finished) return;
+
+            // Mega Jump forward pathing coordinate array
+            if (this.isMegaJumping) {
+              this.megaJumpProgress += dt * 0.85; // ~1.1s warp surge
+              this.worldX = this.megaJumpStartX + (this.megaJumpTargetX - this.megaJumpStartX) * Math.min(this.megaJumpProgress, 1);
+
+              // Center smoothly in arena
+              const targetY = (ceilingY + floorY) / 2 - this.size / 2;
+              this.localY += (targetY - this.localY) * dt * 8;
+              this.vy = 0;
+
+              // Check if crossed into World 2 during warp
+              if (this.worldX >= WORLD1_LENGTH && this.mode === 'CUBE') {
+                this.mode = 'ROCKET';
+                updateModeTag(this.id, 'ROCKET');
+              }
+
+              if (this.megaJumpProgress >= 1) {
+                this.isMegaJumping = false;
+              }
+
+              this.addTrail();
+              return;
+            }
+
+            // Normal progression
+            this.worldX += BASE_SPEED * dt;
+
+            // World 2 Transition Checkpoint
+            if (this.worldX >= WORLD1_LENGTH && this.mode === 'CUBE') {
+              this.mode = 'ROCKET';
+              updateModeTag(this.id, 'ROCKET');
+            }
+
+            // Finish Line
+            if (this.worldX >= TOTAL_COURSE_LENGTH) {
+              this.finished = true;
+              return;
+            }
+
+            if (this.mode === 'CUBE') {
+              // --- CUBE MODE PHYSICS ---
+              this.vy += CUBE_GRAVITY * dt;
+              this.localY += this.vy * dt;
+
+              if (!this.isGrounded) {
+                this.rotation += Math.PI * 4.2 * dt;
+              }
+
+              // Floor collision
+              if (this.localY >= floorY - this.size) {
+                this.localY = floorY - this.size;
+                this.vy = 0;
+                this.isGrounded = true;
+                const snap = Math.PI / 2;
+                this.rotation = Math.round(this.rotation / snap) * snap;
+              }
+            } else {
+              // --- MINI ROCKET FLIGHT MODE PHYSICS (HOLD-TO-FLY) ---
+              if (this.inputHeld) {
+                this.vy += ROCKET_THRUST * dt; // Continuous upward thrust
+                this.rocketAngle = -0.42; // Tilt nose upward
+                this.thrustTimer += dt;
+                if (this.thrustTimer > 0.08) {
+                  sfx.playRocketHum(this.id === 1 ? 270 : 220);
+                  this.thrustTimer = 0;
+                }
+              } else {
+                this.vy += ROCKET_GRAVITY * dt; // Down-glide gravity decay
+                this.rocketAngle = 0.38; // Tilt nose downward
+              }
+
+              // Velocity clamp
+              this.vy = Math.max(-ROCKET_MAX_VY, Math.min(ROCKET_MAX_VY, this.vy));
+              this.localY += this.vy * dt;
+
+              // Corridor ceiling and floor clamping
+              if (this.localY <= ceilingY) {
+                this.localY = ceilingY;
+                this.vy = 0;
+              } else if (this.localY >= floorY - this.size) {
+                this.localY = floorY - this.size;
+                this.vy = 0;
+              }
+            }
+
+            this.addTrail();
+          }
+
+          addTrail() {
+            this.trail.push({
+              worldX: this.worldX,
+              localY: this.localY,
+              rotation: this.mode === 'CUBE' ? this.rotation : this.rocketAngle,
+              mode: this.mode,
+              alpha: 0.5
+            });
+
+            for (let i = 0; i < this.trail.length; i++) {
+              this.trail[i].alpha -= 0.045;
+            }
+            this.trail = this.trail.filter((t) => t.alpha > 0.05);
+          }
+
+          draw(ctx, cameraOffsetX, offsetY) {
+            if (!this.alive) return;
+
+            const screenX = this.worldX - cameraOffsetX;
+            const screenY = offsetY + this.localY;
+
+            // Motion trail
+            ctx.save();
+            for (const t of this.trail) {
+              const tx = t.worldX - cameraOffsetX;
+              const ty = offsetY + t.localY;
+              ctx.save();
+              ctx.translate(tx + this.size / 2, ty + this.size / 2);
+              ctx.rotate(t.rotation);
+              ctx.strokeStyle = this.color;
+              ctx.globalAlpha = t.alpha * 0.4;
+              ctx.lineWidth = 2;
+              if (t.mode === 'CUBE') {
+                ctx.strokeRect(-this.size / 2, -this.size / 2, this.size, this.size);
+              } else {
+                this.drawRocketShape(ctx, false);
+              }
+              ctx.restore();
+            }
+            ctx.restore();
+
+            // Active player vector shape
+            ctx.save();
+            ctx.translate(screenX + this.size / 2, screenY + this.size / 2);
+
+            ctx.shadowColor = this.color;
+            ctx.shadowBlur = this.isMegaJumping ? 28 : 18;
+            ctx.strokeStyle = this.color;
+            ctx.fillStyle = '#06060c';
+            ctx.lineWidth = 3;
+
+            if (this.mode === 'CUBE') {
+              // --- CUBE VECTOR SHAPE ---
+              ctx.rotate(this.rotation);
+              ctx.beginPath();
+              ctx.roundRect(-this.size / 2, -this.size / 2, this.size, this.size, 4);
+              ctx.fill();
+              ctx.stroke();
+
+              // Inner neon core & pupil
+              ctx.fillStyle = this.color;
+              const inner = this.size * 0.44;
+              ctx.fillRect(-inner / 2, -inner / 2, inner, inner);
+              ctx.fillStyle = '#000000';
+              ctx.fillRect(-inner * 0.22, -inner * 0.22, inner * 0.44, inner * 0.44);
+            } else {
+              // --- MINI ROCKET SHIP VECTOR SHAPE ---
+              ctx.rotate(this.rocketAngle);
+              this.drawRocketShape(ctx, true);
+            }
+
+            ctx.restore();
+          }
+
+          drawRocketShape(ctx, withThrusterFlames) {
+            const w = this.size * 1.15;
+            const h = this.size * 0.85;
+
+            // Aerodynamic fuselage & wings
+            ctx.beginPath();
+            ctx.moveTo(w / 2, 0); // Pointed nose
+            ctx.lineTo(-w / 2 + 5, -h / 2); // Top wing
+            ctx.lineTo(-w / 2, -h / 4);
+            ctx.lineTo(-w / 2, h / 4);
+            ctx.lineTo(-w / 2 + 5, h / 2); // Bottom wing
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Cockpit neon canopy
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.ellipse(w * 0.1, 0, w * 0.2, h * 0.22, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Thruster fire flames
+            if (withThrusterFlames && (this.inputHeld || this.isMegaJumping)) {
+              ctx.save();
+              ctx.shadowColor = '#ffff00';
+              ctx.shadowBlur = 14;
+              ctx.fillStyle = '#ffaa00';
+              ctx.beginPath();
+              ctx.moveTo(-w / 2, -h * 0.25);
+              ctx.lineTo(-w / 2 - (10 + Math.random() * 12), 0);
+              ctx.lineTo(-w / 2, h * 0.25);
+              ctx.closePath();
+              ctx.fill();
+              ctx.restore();
+            }
+          }
+
+          getHitbox() {
+            const inset = 5;
+            return {
+              x: this.worldX + inset,
+              y: this.localY + inset,
+              w: this.size - inset * 2,
+              h: this.size - inset * 2
+            };
+          }
+        }
+
+        /* -----------------------------------------------------------
+           5. OBSTACLE TRACK GENERATOR (WORLD 1 & WORLD 2)
+           Vibrant crimson neon spikes on floors and ceilings
+           ----------------------------------------------------------- */
+        class SplitScreenTrack {
+          constructor() {
+            this.spikes = [];
+            this.generate();
+          }
+
+          generate() {
+            this.spikes = [];
+
+            // --- WORLD 1 (CUBE): Floor spikes ---
+            let cx = 450;
+            while (cx < WORLD1_LENGTH - 200) {
+              const r = Math.random();
+              if (r < 0.44) {
+                this.spikes.push({ worldX: cx, type: 'floor', count: 1 });
+                cx += 360 + Math.random() * 160;
+              } else if (r < 0.8) {
+                this.spikes.push({ worldX: cx, type: 'floor', count: 2 });
+                cx += 420 + Math.random() * 180;
+              } else {
+                this.spikes.push({ worldX: cx, type: 'floor', count: 3 });
+                cx += 480 + Math.random() * 200;
+              }
+            }
+
+            // Portal Checkpoint at WORLD1_LENGTH
+            this.portalX = WORLD1_LENGTH;
+
+            // --- WORLD 2 (MINI ROCKET): Ceiling and Floor aerial spikes ---
+            cx = WORLD1_LENGTH + 280;
+            while (cx < TOTAL_COURSE_LENGTH - 250) {
+              const r = Math.random();
+              if (r < 0.35) {
+                // Ceiling spike
+                this.spikes.push({ worldX: cx, type: 'ceiling', count: 2 });
+                cx += 340 + Math.random() * 160;
+              } else if (r < 0.7) {
+                // Floor spike
+                this.spikes.push({ worldX: cx, type: 'floor', count: 2 });
+                cx += 340 + Math.random() * 160;
+              } else {
+                // Staggered gauntlet
+                this.spikes.push({ worldX: cx, type: 'ceiling', count: 2 });
+                this.spikes.push({ worldX: cx + 150, type: 'floor', count: 2 });
+                cx += 450 + Math.random() * 200;
+              }
+            }
+          }
+
+          draw(ctx, cameraOffsetX, offsetY, ceilingY, floorY) {
+            const spikeW = 32;
+            const spikeH = 40;
+
+            // Checkpoint Gate into World 2
+            const portalScreenX = this.portalX - cameraOffsetX;
+            if (portalScreenX > -100 && portalScreenX < viewW + 100) {
+              ctx.save();
+              ctx.shadowColor = '#ffff00';
+              ctx.shadowBlur = 20;
+              ctx.strokeStyle = '#ffff00';
+              ctx.lineWidth = 4;
+
+              ctx.beginPath();
+              ctx.moveTo(portalScreenX, offsetY + ceilingY);
+              ctx.lineTo(portalScreenX, offsetY + floorY);
+              ctx.stroke();
+
+              ctx.fillStyle = 'rgba(255, 255, 0, 0.2)';
+              ctx.fillRect(portalScreenX - 8, offsetY + ceilingY, 16, floorY - ceilingY);
+
+              ctx.font = 'bold 12px monospace';
+              ctx.textAlign = 'center';
+              ctx.fillStyle = '#ffff00';
+              ctx.fillText('⚡ WORLD 2: ROCKET PORTAL', portalScreenX, offsetY + ceilingY + 30);
+              ctx.restore();
+            }
+
+            // Finish Line Marker
+            const finishScreenX = TOTAL_COURSE_LENGTH - cameraOffsetX;
+            if (finishScreenX > -100 && finishScreenX < viewW + 100) {
+              ctx.save();
+              ctx.shadowColor = '#00ff88';
+              ctx.shadowBlur = 24;
+              ctx.strokeStyle = '#00ff88';
+              ctx.lineWidth = 5;
+
+              ctx.beginPath();
+              ctx.moveTo(finishScreenX, offsetY + ceilingY);
+              ctx.lineTo(finishScreenX, offsetY + floorY);
+              ctx.stroke();
+
+              ctx.font = 'bold 13px monospace';
+              ctx.textAlign = 'center';
+              ctx.fillStyle = '#00ff88';
+              ctx.fillText('🏁 FINISH LINE', finishScreenX, offsetY + (ceilingY + floorY) / 2);
+              ctx.restore();
+            }
+
+            // Crimson spikes
+            ctx.save();
+            ctx.shadowColor = '#ff003c';
+            ctx.shadowBlur = 16;
+            ctx.strokeStyle = '#ff003c';
+            ctx.fillStyle = '#0a0003';
+            ctx.lineWidth = 2.5;
+
+            for (const s of this.spikes) {
+              const startX = s.worldX - cameraOffsetX;
+              if (startX < -100 || startX > viewW + 100) continue;
+
+              for (let i = 0; i < s.count; i++) {
+                const sx = startX + i * (spikeW + 2);
+                ctx.beginPath();
+                if (s.type === 'floor') {
+                  const sy = offsetY + floorY;
+                  ctx.moveTo(sx, sy);
+                  ctx.lineTo(sx + spikeW / 2, sy - spikeH);
+                  ctx.lineTo(sx + spikeW, sy);
+                } else {
+                  const sy = offsetY + ceilingY;
+                  ctx.moveTo(sx, sy);
+                  ctx.lineTo(sx + spikeW / 2, sy + spikeH);
+                  ctx.lineTo(sx + spikeW, sy);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+              }
+            }
+            ctx.restore();
+          }
+
+          checkCollision(box, ceilingY, floorY) {
+            const spikeW = 32;
+            const spikeH = 40;
+
+            for (const s of this.spikes) {
+              for (let i = 0; i < s.count; i++) {
+                const sx = s.worldX + i * (spikeW + 2);
+                let sTop, sBottom;
+
+                if (s.type === 'floor') {
+                  sTop = floorY - spikeH;
+                  sBottom = floorY;
+                } else {
+                  sTop = ceilingY;
+                  sBottom = ceilingY + spikeH;
+                }
+
+                if (
+                  box.x + box.w > sx + 5 &&
+                  box.x < sx + spikeW - 5 &&
+                  box.y + box.h > sTop + 5 &&
+                  box.y < sBottom - 2
+                ) {
+                  return true;
+                }
+              }
+            }
+            return false;
+          }
+        }
+
+        const track = new SplitScreenTrack();
+
+        /* -----------------------------------------------------------
+           6. PARTICLE SHARD EXPLOSIONS
+           ----------------------------------------------------------- */
+        class ParticleManager {
+          constructor() {
+            this.particles = [];
+          }
+
+          explode(x, y, color) {
+            for (let i = 0; i < 35; i++) {
+              const angle = Math.random() * Math.PI * 2;
+              const spd = 120 + Math.random() * 450;
+              this.particles.push({
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * spd,
+                vy: Math.sin(angle) * spd - 80,
+                color: color,
+                size: 3 + Math.random() * 5,
+                alpha: 1.0,
+                decay: 0.9 + Math.random() * 1.1
+              });
+            }
+          }
+
+          update(dt) {
+            for (const p of this.particles) {
+              p.x += p.vx * dt;
+              p.y += p.vy * dt;
+              p.vy += 800 * dt;
+              p.alpha -= p.decay * dt;
+            }
+            this.particles = this.particles.filter((p) => p.alpha > 0);
+          }
+
+          draw(ctx) {
+            ctx.save();
+            for (const p of this.particles) {
+              ctx.shadowColor = p.color;
+              ctx.shadowBlur = 12;
+              ctx.fillStyle = p.color;
+              ctx.globalAlpha = Math.max(0, p.alpha);
+              ctx.fillRect(p.x, p.y, p.size, p.size);
+            }
+            ctx.restore();
+          }
+
+          clear() {
+            this.particles = [];
+          }
+        }
+
+        const particles = new ParticleManager();
+
+        /* -----------------------------------------------------------
+           7. PLAYERS INITIALIZATION & DASH HUD BINDINGS
+           ----------------------------------------------------------- */
+        const p1 = new SplitScreenRunner(1, '#00f0ff', 'P1', savedDashesP1);
+        const p2 = new SplitScreenRunner(2, '#ff007f', 'P2', savedDashesP2);
+
+        function savePersistentDashes() {
+          try {
+            localStorage.setItem('gd_retro_dashes_p1', p1.dashes.toString());
+            localStorage.setItem('gd_retro_dashes_p2', p2.dashes.toString());
+          } catch (e) {}
+        }
+
+        function updateModeTag(id, mode) {
+          const tag = document.getElementById(id === 1 ? 'hudP1Mode' : 'hudP2Mode');
+          if (tag) {
+            tag.textContent = mode;
+            tag.className = `hud-mode-tag ${mode === 'CUBE' ? 'mode-cube' : 'mode-rocket'}`;
+          }
+        }
+
+        function updateDashesHUD() {
+          const d1 = document.getElementById('hudP1Dashes');
+          const d2 = document.getElementById('hudP2Dashes');
+          if (d1) d1.textContent = `DASHES: ${p1.dashes}`;
+          if (d2) d2.textContent = `DASHES: ${p2.dashes}`;
+
+          const b1 = document.getElementById('btnBuyP1');
+          const b2 = document.getElementById('btnBuyP2');
+          if (b1) {
+            b1.textContent = p1.hasMegaJumpPurchased ? 'P1 MEGA JUMP OWNED' : `BUY P1 (${p1.dashes}/15 Dashes)`;
+            b1.disabled = p1.dashes < 15 || p1.hasMegaJumpPurchased;
+          }
+          if (b2) {
+            b2.textContent = p2.hasMegaJumpPurchased ? 'P2 MEGA JUMP OWNED' : `BUY P2 (${p2.dashes}/15 Dashes)`;
+            b2.disabled = p2.dashes < 15 || p2.hasMegaJumpPurchased;
+          }
+
+          const m1 = document.getElementById('hudP1MegaActive');
+          const m2 = document.getElementById('hudP2MegaActive');
+          if (m1) m1.style.display = p1.hasMegaJumpPurchased ? 'inline-block' : 'none';
+          if (m2) m2.style.display = p2.hasMegaJumpPurchased ? 'inline-block' : 'none';
+        }
+
+        function resetGame() {
+          p1.reset();
+          p2.reset();
+          particles.clear();
+          track.generate();
+
+          updateModeTag(1, 'CUBE');
+          updateModeTag(2, 'CUBE');
+          updateDashesHUD();
+
+          document.getElementById('startScreen').classList.add('hidden');
+          document.getElementById('shopScreen').classList.add('hidden');
+          document.getElementById('gameOverScreen').classList.add('hidden');
+
+          sfx.init();
+
+          // Play the audio when game starts
+          restartYouTubeAudio();
+
+          gameState = STATES.PLAYING;
+        }
+
+        function triggerGameOver(reasonText) {
+          gameState = STATES.GAMEOVER;
+          sfx.playVictory();
+
+          // Restart the audio when both players die
+          if (!p1.alive && !p2.alive && !p1.finished && !p2.finished) {
+            restartYouTubeAudio();
+          }
+
+          const d1 = Math.floor(p1.worldX / 10);
+          const d2 = Math.floor(p2.worldX / 10);
+
+          const headline = document.getElementById('winnerHeadline');
+          const reason = document.getElementById('winnerReason');
+
+          if (p1.finished && !p2.finished) {
+            headline.textContent = 'PLAYER 1 WINS!';
+            headline.className = 'winner-banner-headline harlow-font winner-p1';
+            reason.textContent = 'Player 1 conquered World 2 and crossed the Finish Line first!';
+          } else if (p2.finished && !p1.finished) {
+            headline.textContent = 'PLAYER 2 WINS!';
+            headline.className = 'winner-banner-headline harlow-font winner-p2';
+            reason.textContent = 'Player 2 conquered World 2 and crossed the Finish Line first!';
+          } else if (p1.finished && p2.finished) {
+            headline.textContent = p1.worldX > p2.worldX ? 'PLAYER 1 WINS!' : 'PLAYER 2 WINS!';
+            headline.className = `winner-banner-headline harlow-font ${p1.worldX > p2.worldX ? 'winner-p1' : 'winner-p2'}`;
+            reason.textContent = 'Both completed the course! Winner determined by lead margin.';
+          } else {
+            // Both crashed
+            if (d1 > d2) {
+              headline.textContent = 'PLAYER 1 WINS!';
+              headline.className = 'winner-banner-headline harlow-font winner-p1';
+              reason.textContent = `Player 1 traveled further into the gauntlet (${d1}m vs ${d2}m)!`;
+            } else if (d2 > d1) {
+              headline.textContent = 'PLAYER 2 WINS!';
+              headline.className = 'winner-banner-headline harlow-font winner-p2';
+              reason.textContent = `Player 2 traveled further into the gauntlet (${d2}m vs ${d1}m)!`;
+            } else {
+              headline.textContent = "IT'S A TIE!";
+              headline.className = 'winner-banner-headline harlow-font winner-tie';
+              reason.textContent = 'Both racers matched identical distance scores!';
+            }
+          }
+
+          if (reasonText) reason.textContent = reasonText;
+
+          document.getElementById('statP1Dist').textContent = `${d1} m`;
+          document.getElementById('statP2Dist').textContent = `${d2} m`;
+          document.getElementById('statP1Dashes').textContent = `${p1.dashes}`;
+          document.getElementById('statP2Dashes').textContent = `${p2.dashes}`;
+          document.getElementById('statP1Status').textContent = p1.finished ? 'Finished Course' : (p1.alive ? 'Surviving' : 'Crashed');
+          document.getElementById('statP2Status').textContent = p2.finished ? 'Finished Course' : (p2.alive ? 'Surviving' : 'Crashed');
+
+          setTimeout(() => {
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+          }, 320);
+        }
+
+        /* -----------------------------------------------------------
+           8. MULTI-DEVICE INPUT MAPPING (DESKTOP & PASSIVE TOUCH)
+           ----------------------------------------------------------- */
+        // Desktop Controls:
+        // P1: 'W' or 'A'
+        // P2: 'Up Arrow' or 'L'
+        window.addEventListener('keydown', (e) => {
+          if (e.code === 'Space' || e.code === 'Enter') {
+            if (gameState === STATES.MENU || gameState === STATES.GAMEOVER) {
+              resetGame();
+              return;
+            }
+          }
+
+          if (gameState !== STATES.PLAYING) return;
+
+          if (e.key === 'w' || e.key === 'W' || e.key === 'a' || e.key === 'A') {
+            if (!e.repeat) p1.onInputDown();
+            flashTouchZone('p1');
+          }
+
+          if (e.key === 'ArrowUp' || e.key === 'l' || e.key === 'L') {
+            if (!e.repeat) p2.onInputDown();
+            flashTouchZone('p2');
+          }
+        });
+
+        window.addEventListener('keyup', (e) => {
+          if (e.key === 'w' || e.key === 'W' || e.key === 'a' || e.key === 'A') {
+            p1.onInputUp();
+          }
+          if (e.key === 'ArrowUp' || e.key === 'l' || e.key === 'L') {
+            p2.onInputUp();
+          }
+        });
+
+        // Mobile / Tablet passive-safe touch tracking
+        const zoneP1 = document.getElementById('zoneP1');
+        const zoneP2 = document.getElementById('zoneP2');
+        const touchContainer = document.getElementById('touchZones');
+
+        function flashTouchZone(player) {
+          if (player === 'p1') {
+            zoneP1.classList.add('active-p1');
+            setTimeout(() => zoneP1.classList.remove('active-p1'), 130);
+          } else {
+            zoneP2.classList.add('active-p2');
+            setTimeout(() => zoneP2.classList.remove('active-p2'), 130);
+          }
+        }
+
+        const touchesP1 = new Set();
+        const touchesP2 = new Set();
+
+        touchContainer.addEventListener('touchstart', (e) => {
+          if (gameState !== STATES.PLAYING) return;
+          const midX = window.innerWidth / 2;
+
+          for (let i = 0; i < e.changedTouches.length; i++) {
+            const t = e.changedTouches[i];
+            if (t.clientX < midX) {
+              touchesP1.add(t.identifier);
+              p1.onInputDown();
+              flashTouchZone('p1');
+            } else {
+              touchesP2.add(t.identifier);
+              p2.onInputDown();
+              flashTouchZone('p2');
+            }
+          }
+        }, { passive: true });
+
+        touchContainer.addEventListener('touchend', (e) => {
+          for (let i = 0; i < e.changedTouches.length; i++) {
+            const t = e.changedTouches[i];
+            touchesP1.delete(t.identifier);
+            touchesP2.delete(t.identifier);
+          }
+          if (touchesP1.size === 0) p1.onInputUp();
+          if (touchesP2.size === 0) p2.onInputUp();
+        }, { passive: true });
+
+        touchContainer.addEventListener('touchcancel', (e) => {
+          for (let i = 0; i < e.changedTouches.length; i++) {
+            const t = e.changedTouches[i];
+            touchesP1.delete(t.identifier);
+            touchesP2.delete(t.identifier);
+          }
+          if (touchesP1.size === 0) p1.onInputUp();
+          if (touchesP2.size === 0) p2.onInputUp();
+        }, { passive: true });
+
+        /* -----------------------------------------------------------
+           9. RESPONSIVE RESIZE
+           ----------------------------------------------------------- */
+        function resize() {
+          dpr = window.devicePixelRatio || 1;
+          viewW = window.innerWidth;
+          viewH = window.innerHeight;
+          halfH = Math.floor(viewH / 2);
+
+          canvas.width = viewW * dpr;
+          canvas.height = viewH * dpr;
+          ctx.scale(dpr, dpr);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        /* -----------------------------------------------------------
+           10. SPLIT-SCREEN RENDER & LOOP MODULES
+           ----------------------------------------------------------- */
+        let lastTime = performance.now();
+
+        function renderSplitViewport(player, offsetY, dt) {
+          const ceilingY = 28;
+          const floorY = halfH - 26;
+          const cameraOffsetX = player.worldX - viewW * 0.2;
+
+          ctx.save();
+          // Clip drawing strictly to player's 50% split window
+          ctx.beginPath();
+          ctx.rect(0, offsetY, viewW, halfH);
+          ctx.clip();
+
+          // Pure black AMOLED background
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(0, offsetY, viewW, halfH);
+
+          // Sleek Horizon Floor Line
+          ctx.strokeStyle = player.id === 1 ? 'rgba(0, 240, 255, 0.22)' : 'rgba(255, 0, 127, 0.22)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(0, offsetY + floorY);
+          ctx.lineTo(viewW, offsetY + floorY);
+          ctx.stroke();
+
+          // Aerial Corridor Ceiling Line
+          ctx.strokeStyle = player.mode === 'ROCKET' ? 'rgba(255, 170, 0, 0.35)' : 'rgba(255, 255, 255, 0.08)';
+          ctx.beginPath();
+          ctx.moveTo(0, offsetY + ceilingY);
+          ctx.lineTo(viewW, offsetY + ceilingY);
+          ctx.stroke();
+
+          // Velocity Tracking Ticks on ground
+          const tick = (player.worldX % 45);
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+          for (let x = -tick; x < viewW; x += 45) {
+            ctx.beginPath();
+            ctx.moveTo(x, offsetY + floorY);
+            ctx.lineTo(x - 10, offsetY + floorY + 10);
+            ctx.stroke();
+          }
+
+          // Draw track spikes, portals, finish lines
+          track.draw(ctx, cameraOffsetX, offsetY, ceilingY, floorY);
+
+          // Update & check player collisions
+          if (gameState === STATES.PLAYING) {
+            player.update(dt, ceilingY, floorY);
+
+            if (player.alive && !player.isMegaJumping && !player.finished) {
+              if (track.checkCollision(player.getHitbox(), ceilingY, floorY)) {
+                player.alive = false;
+                sfx.playExplosion();
+                particles.explode(
+                  player.worldX - cameraOffsetX + player.size / 2,
+                  offsetY + player.localY + player.size / 2,
+                  player.color
+                );
+              }
+            }
+          }
+
+          // Draw player
+          player.draw(ctx, cameraOffsetX, offsetY);
+
+          // Status overlay badge in field
+          if (player.finished) {
+            ctx.font = 'bold 20px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#00ff88';
+            ctx.shadowColor = '#00ff88';
+            ctx.shadowBlur = 15;
+            ctx.fillText('🏆 COURSE FINISHED!', viewW / 2, offsetY + halfH / 2);
+          } else if (!player.alive) {
+            ctx.font = 'bold 16px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#ff003c';
+            ctx.shadowColor = '#ff003c';
+            ctx.shadowBlur = 12;
+            ctx.fillText('CRASHED', viewW / 2, offsetY + halfH / 2);
+          }
+
+          ctx.restore();
+        }
+
+        function gameLoop(now) {
+          const dt = Math.min((now - lastTime) / 1000, 0.1);
+          lastTime = now;
+
+          // Pure black canvas clear
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(0, 0, viewW, viewH);
+
+          // 1. Render Player 1's field (Top 50%)
+          renderSplitViewport(p1, 0, dt);
+
+          // 2. Render Player 2's field (Bottom 50%)
+          renderSplitViewport(p2, halfH, dt);
+
+          // Update & draw particles across full canvas
+          particles.update(dt);
+          particles.draw(ctx);
+
+          // Update HUD distance meters
+          document.getElementById('hudP1Dist').textContent = `${Math.floor(p1.worldX / 10)}m`;
+          document.getElementById('hudP2Dist').textContent = `${Math.floor(p2.worldX / 10)}m`;
+
+          // Win/Crash resolution
+          if (gameState === STATES.PLAYING) {
+            if (p1.finished || p2.finished) {
+              triggerGameOver();
+            } else if (!p1.alive && !p2.alive) {
+              triggerGameOver('Both racers crashed before finishing!');
+            }
+          }
+
+          requestAnimationFrame(gameLoop);
+        }
+
+        requestAnimationFrame(gameLoop);
+
+        /* -----------------------------------------------------------
+           11. DASH SHOP & FLOATING MODAL EVENTS
+           ----------------------------------------------------------- */
+        document.getElementById('btnStartRace').addEventListener('click', () => {
+          resetGame();
+        });
+
+        document.getElementById('btnPlayAgain').addEventListener('click', () => {
+          resetGame();
+        });
+
+        function goToMainMenu() {
+          gameState = STATES.MENU;
+          document.getElementById('gameOverScreen').classList.add('hidden');
+          document.getElementById('shopScreen').classList.add('hidden');
+          document.getElementById('startScreen').classList.remove('hidden');
+
+          p1.reset();
+          p2.reset();
+          updateModeTag(1, 'CUBE');
+          updateModeTag(2, 'CUBE');
+          updateDashesHUD();
+        }
+
+        document.getElementById('btnMainMenu').addEventListener('click', () => {
+          goToMainMenu();
+        });
+
+        function openShop() {
+          updateDashesHUD();
+          document.getElementById('shopScreen').classList.remove('hidden');
+        }
+
+        function closeShop() {
+          document.getElementById('shopScreen').classList.add('hidden');
+        }
+
+        document.getElementById('btnOpenShop').addEventListener('click', openShop);
+        document.getElementById('btnDividerShop').addEventListener('click', openShop);
+        document.getElementById('btnCloseShop').addEventListener('click', closeShop);
+
+        // Trade 15 Dashes for Mega Jump Surge
+        document.getElementById('btnBuyP1').addEventListener('click', () => {
+          if (p1.dashes >= 15 && !p1.hasMegaJumpPurchased) {
+            p1.dashes -= 15;
+            p1.hasMegaJumpPurchased = true;
+            savePersistentDashes();
+            updateDashesHUD();
+          }
+        });
+
+        document.getElementById('btnBuyP2').addEventListener('click', () => {
+          if (p2.dashes >= 15 && !p2.hasMegaJumpPurchased) {
+            p2.dashes -= 15;
+            p2.hasMegaJumpPurchased = true;
+            savePersistentDashes();
+            updateDashesHUD();
+          }
+        });
+
+        // Initialize audio context on initial pointer interaction
+        document.addEventListener('pointerdown', () => {
+          sfx.init();
+        }, { once: true });
+
+        // Initial HUD refresh
+        updateDashesHUD();
+
+      })();
+    </script>
+  </body>
+</html>
